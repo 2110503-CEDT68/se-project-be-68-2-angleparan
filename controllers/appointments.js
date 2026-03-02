@@ -5,37 +5,126 @@ const Dentist = require('../models/Dentist');
 // @route   GET /api/v1/appointments
 // @access  Private
 exports.getAppointments = async (req, res, next) => {
-  let query;
+  try {
+    let query;
 
-  if (req.user.role !== 'admin') {
-    query = Appointment.find({ user: req.user.id }).populate({
+    // =========================
+    // USER (ไม่ต้อง query)
+    // =========================
+    if (req.user.role !== 'admin') {
+      query = Appointment.find({ user: req.user.id }).populate({
+        path: 'dentist',
+        select: 'name experience expertise'
+      });
+
+      const appointments = await query;
+
+      return res.status(200).json({
+        success: true,
+        count: appointments.length,
+        data: appointments
+      });
+    }
+
+    // =========================
+    // ADMIN (Advanced Query)
+    // =========================
+
+    // Copy req.query
+    const reqQuery = { ...req.query };
+
+    // Fields to exclude
+    const removeFields = ['select', 'sort', 'page', 'limit', 'startDate', 'endDate'];
+    removeFields.forEach(param => delete reqQuery[param]);
+
+    // Create query string
+    let queryStr = JSON.stringify(reqQuery);
+    queryStr = queryStr.replace(
+      /\b(gt|gte|lt|lte|in)\b/g,
+      match => `$${match}`
+    );
+
+    let findCondition = JSON.parse(queryStr);
+
+    // DATE = exact day search
+    if (req.query.apptDate) {
+      const start = new Date(req.query.apptDate);
+      const end = new Date(start);
+
+      end.setDate(end.getDate() + 1);
+
+      findCondition.apptDate = {
+        $gte: start,
+        $lt: end
+      };
+    }
+
+    // =========================
+    // DATE RANGE BOOKING
+    // =========================
+    if (req.query.startDate || req.query.endDate) {
+      findCondition.apptDate = {};
+
+      if (req.query.startDate) {
+        findCondition.apptDate.$gte = new Date(req.query.startDate);
+      }
+
+      if (req.query.endDate) {
+        findCondition.apptDate.$lte = new Date(req.query.endDate);
+      }
+    }
+
+
+    // Nested route: dentist appointments
+    if (req.params.dentistId) {
+      findCondition.dentist = req.params.dentistId;
+    }
+
+    query = Appointment.find(findCondition).populate({
       path: 'dentist',
       select: 'name experience expertise'
     });
-  } else {
-    if (req.params.dentistId) {
-      query = Appointment.find({
-        dentist: req.params.dentistId
-      }).populate({
-        path: 'dentist',
-        select: 'name experience expertise'
-      });
-    } else {
-      query = Appointment.find().populate({
-        path: 'dentist',
-        select: 'name experience expertise'
-      });
+
+    // Select fields
+    if (req.query.select) {
+      const fields = req.query.select.split(',').join(' ');
+      query = query.select(fields);
     }
-  }
 
-  try {
-  const appointments = await query;
+    // Sort
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort('-apptDate');
+    }
 
-  res.status(200).json({
-    success: true,
-    count: appointments.length,
-    data: appointments
-  });
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const total = await Appointment.countDocuments(findCondition);
+
+    query = query.skip(startIndex).limit(limit);
+
+    const appointments = await query;
+
+    // Pagination result
+    const pagination = {};
+    if (endIndex < total) {
+      pagination.next = { page: page + 1, limit };
+    }
+    if (startIndex > 0) {
+      pagination.prev = { page: page - 1, limit };
+    }
+
+    res.status(200).json({
+      success: true,
+      count: appointments.length,
+      pagination,
+      data: appointments
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -44,6 +133,7 @@ exports.getAppointments = async (req, res, next) => {
     });
   }
 };
+
 
 // @desc    Get single appointment
 // @route   GET /api/v1/appointments/:id
