@@ -85,12 +85,48 @@ exports.addAppointment = async (req, res, next) => {
 
   const dentist = await Dentist.findById(req.params.dentistId);
 
+
   if (!dentist) {
     return res.status(404).json({
       success: false,
       message: `No dentist with id ${req.params.dentistId}`
     });
   }
+
+    //  เช็คเวลาทำงานของหมอ
+    //  doc sleep
+const apptDate = new Date(req.body.apptDate);
+const hour = apptDate.getHours();
+
+//  1. กันนอกเวลาทำงาน
+if (
+  hour < dentist.workingHours.start ||
+  hour >= dentist.workingHours.end
+) {
+  return res.status(400).json({
+    success: false,
+    message: 'Cannot book, Dentist is unavailable at this time'
+  });
+}
+
+//  2. Block ±1 ชั่วโมง (ชั่วโมงก่อนหน้า, ชั่วโมงเดียวกัน, ชั่วโมงถัดไป)
+const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
+const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000 - 1);
+
+const existedAppointment = await Appointment.findOne({
+  dentist: req.params.dentistId,
+  apptDate: {
+    $gte: windowStart,
+    $lte: windowEnd
+  }
+});
+
+if (existedAppointment) {
+  return res.status(400).json({
+    success: false,
+    message: 'This hour is already booked'
+  });
+}
 
   //user จองได้ครั้งเดียว
     // ถ้าไม่ใช่ admin → ตรวจว่ามีนัดแล้วหรือยัง
@@ -133,6 +169,46 @@ exports.updateAppointment = async (req, res, next) => {
       message: `No appointment with id ${req.params.id}`
     });
   }
+//doc sleeping
+  // ถ้ามีการแก้ apptDate
+if (req.body.apptDate) {
+
+  const apptDate = new Date(req.body.apptDate);
+  const hour = apptDate.getHours();
+
+  const dentist = await Dentist.findById(appointment.dentist);
+
+  //  กันนอกเวลางาน
+  if (
+    hour < dentist.workingHours.start ||
+    hour >= dentist.workingHours.end
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot update, Dentist is not working at this time'
+    });
+  }
+
+  //  block ±1 ชั่วโมง (ยกเว้นตัวเอง)
+const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
+  const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000 - 1);
+
+  const existedAppointment = await Appointment.findOne({
+    dentist: appointment.dentist,
+    _id: { $ne: appointment._id }, // เอาเวลาเก่าออก
+    apptDate: {
+      $gte: windowStart,
+      $lte: windowEnd
+    }
+  });
+
+  if (existedAppointment) {
+    return res.status(400).json({
+      success: false,
+      message: 'This hour is already booked'
+    });
+  }
+}
 
   if (
     appointment.user.toString() !== req.user.id &&

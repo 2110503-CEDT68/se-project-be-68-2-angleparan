@@ -15,7 +15,12 @@ const DentistSchema = new mongoose.Schema(
     expertise: {
       type: String,
       required: [true, 'Please add area of expertise']
-    }
+    },
+    //doc sleeping
+    workingHours: {
+      start: { type: Number, required: true },  // เช่น 9
+      end: { type: Number, required: true }     // เช่น 17
+  }
   },
   {
     toJSON: { virtuals: true },
