@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const Dentist = require('../models/Dentist');
+const moment = require('moment-timezone');
 
 // @desc    Get all appointments
 // @route   GET /api/v1/appointments
@@ -22,7 +23,12 @@ exports.getAppointments = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         count: appointments.length,
-        data: appointments
+        data: appointments.map(appt => ({
+        ...appt._doc,
+        apptDate: moment(appt.apptDate)
+          .tz("Asia/Bangkok")
+          .format("YYYY-MM-DD HH:mm")
+      }))
       });
     }
 
@@ -123,7 +129,12 @@ exports.getAppointments = async (req, res, next) => {
       success: true,
       count: appointments.length,
       pagination,
-      data: appointments
+      data: appointments.map(appt => ({
+        ...appt._doc,
+        apptDate: moment(appt.apptDate)
+          .tz("Asia/Bangkok")
+          .format("YYYY-MM-DD HH:mm")
+      }))
     });
   } catch (error) {
     console.log(error);
@@ -154,7 +165,12 @@ exports.getAppointment = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: appointment
+    data: {
+    ...appointment._doc,
+    apptDate: moment(appointment.apptDate)
+      .tz("Asia/Bangkok")
+      .format("YYYY-MM-DD HH:mm")
+  }
   });
   } catch (error) {
     console.log(error);
@@ -235,7 +251,12 @@ if (existedAppointment) {
 
   res.status(201).json({
     success: true,
-    data: appointment
+    data: {
+    ...appointment._doc,
+    apptDate: moment(appointment.apptDate)
+      .tz("Asia/Bangkok")
+      .format("YYYY-MM-DD HH:mm")
+  }
   });
   } catch (error) {
     console.log(error);
@@ -313,12 +334,17 @@ const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
   appointment = await Appointment.findByIdAndUpdate(
     req.params.id,
     req.body,
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
 
   res.status(200).json({
     success: true,
-    data: appointment
+    data: {
+    ...appointment._doc,
+    apptDate: moment(appointment.apptDate)
+      .tz("Asia/Bangkok")
+      .format("YYYY-MM-DD HH:mm")
+  }
   });
   } catch (error) {
     console.log(error);
