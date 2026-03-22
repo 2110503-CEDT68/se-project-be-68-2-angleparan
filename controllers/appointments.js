@@ -223,7 +223,7 @@ const existedAppointment = await Appointment.findOne({
   dentist: req.params.dentistId,
   apptDate: {
     $gte: windowStart,
-    $lte: windowEnd
+    $lt: windowEnd
   }
 });
 
@@ -309,7 +309,7 @@ const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
     _id: { $ne: appointment._id }, // เอาเวลาเก่าออก
     apptDate: {
       $gte: windowStart,
-      $lte: windowEnd
+      $lt: windowEnd
     }
   });
 
