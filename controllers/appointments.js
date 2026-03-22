@@ -217,12 +217,12 @@ if (
 
 //  2. Block ±1 ชั่วโมง (ชั่วโมงก่อนหน้า, ชั่วโมงเดียวกัน, ชั่วโมงถัดไป)
 const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
-const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000 - 1);
+const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000);
 
 const existedAppointment = await Appointment.findOne({
   dentist: req.params.dentistId,
   apptDate: {
-    $gte: windowStart,
+    $gt: windowStart,
     $lt: windowEnd
   }
 });
@@ -302,13 +302,13 @@ if (req.body.apptDate) {
 
   //  block ±1 ชั่วโมง (ยกเว้นตัวเอง)
 const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
-  const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000 - 1);
+  const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000);
 
   const existedAppointment = await Appointment.findOne({
     dentist: appointment.dentist,
     _id: { $ne: appointment._id }, // เอาเวลาเก่าออก
     apptDate: {
-      $gte: windowStart,
+      $gt: windowStart,
       $lt: windowEnd
     }
   });
