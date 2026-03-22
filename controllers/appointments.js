@@ -202,7 +202,7 @@ exports.addAppointment = async (req, res, next) => {
     //  เช็คเวลาทำงานของหมอ
     //  doc sleep
 const apptDate = new Date(req.body.apptDate);
-const hour = apptDate.getHours();
+const hour = moment(apptDate).tz("Asia/Bangkok").hour();
 
 //  1. กันนอกเวลาทำงาน
 if (
@@ -285,7 +285,7 @@ exports.updateAppointment = async (req, res, next) => {
 if (req.body.apptDate) {
 
   const apptDate = new Date(req.body.apptDate);
-  const hour = apptDate.getHours();
+  const hour = moment(apptDate).tz("Asia/Bangkok").hour();
 
   const dentist = await Dentist.findById(appointment.dentist);
 
