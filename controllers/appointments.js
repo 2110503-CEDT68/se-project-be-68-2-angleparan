@@ -287,7 +287,8 @@ if (req.body.apptDate) {
   const apptDate = new Date(req.body.apptDate);
   const hour = moment(apptDate).tz("Asia/Bangkok").hour();
 
-  const dentist = await Dentist.findById(appointment.dentist);
+  const targetDentistId = req.body.dentist ? req.body.dentist : appointment.dentist;
+  const dentist = await Dentist.findById(targetDentistId);
 
   //  กันนอกเวลางาน
   if (
@@ -305,7 +306,7 @@ const windowStart = new Date(apptDate.getTime() - 60 * 60 * 1000);
   const windowEnd = new Date(apptDate.getTime() + 60 * 60 * 1000);
 
   const existedAppointment = await Appointment.findOne({
-    dentist: appointment.dentist,
+    dentist: targetDentistId,
     _id: { $ne: appointment._id }, // เอาเวลาเก่าออก
     apptDate: {
       $gt: windowStart,
