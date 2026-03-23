@@ -174,6 +174,51 @@ exports.getDentist = async (req, res, next) => {
 };
 
 // ==============================
+// GET DENTIST AVAILABILITY
+// GET /api/v1/dentists/:id/availability?date=YYYY-MM-DD
+// ==============================
+exports.getDentistAvailability = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ success: false, message: 'Please provide a date' });
+    }
+
+    // สร้างช่วงเวลาเริ่มต้นและสิ้นสุดของวันนั้น (ตามเวลา Local)
+    // หมายเหตุ: เนื่องจาก Frontend ของคุณมีการหักลบ 7 ชั่วโมงก่อนเซฟ (UTC) 
+    // เราจะดึงข้อมูลในฐานข้อมูลตามช่วงเวลานั้นๆ
+    const startDate = new Date(`${date}T00:00:00.000+07:00`);
+    const endDate = new Date(`${date}T23:59:59.999+07:00`);
+
+    // หา Appointment ทั้งหมดของหมอคนนี้ในวันที่ระบุ
+    const appointments = await Appointment.find({
+      dentist: id,
+      apptDate: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
+
+    // ดึงเฉพาะ "ชั่วโมง" ที่ถูกจองไปแล้ว
+    // แปลงกลับเป็นเวลาไทย (+7) เพื่อส่งให้ Frontend เอาไปเช็คแบบตรงๆ
+    const bookedHours = appointments.map(appt => {
+      const utcHour = appt.apptDate.getUTCHours();
+      return (utcHour + 7) % 24; 
+    });
+
+    res.status(200).json({
+      success: true,
+      data: bookedHours
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ success: false });
+  }
+};
+
+// ==============================
 // CREATE DENTIST (Admin)
 // POST /api/v1/dentists
 // ==============================

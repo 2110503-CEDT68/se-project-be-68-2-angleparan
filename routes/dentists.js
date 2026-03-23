@@ -6,6 +6,7 @@ const { protect, authorize } = require('../middleware/auth');
 const {
   getDentists,
   getDentist,
+  getDentistAvailability,
   createDentist,
   updateDentist,
   deleteDentist
@@ -22,6 +23,8 @@ router
   .route('/')
   .get(getDentists)
   .post(protect, authorize('admin'), createDentist);
+
+router.route('/:id/availability').get(getDentistAvailability);
 
 router
   .route('/:id')
