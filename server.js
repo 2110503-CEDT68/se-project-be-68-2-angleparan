@@ -45,6 +45,7 @@ connectDB();
 const dentists = require('./routes/dentists');
 const appointments = require('./routes/appointments');
 const auth = require('./routes/auth');
+const users = require('./routes/users');
 
 const app = express();
 // Enable advanced query parsing
@@ -65,6 +66,7 @@ app.use(cors());
 app.use('/api/v1/dentists', dentists);
 app.use('/api/v1/appointments', appointments);
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/users', users);
 
 const PORT = process.env.PORT || 5000;
 

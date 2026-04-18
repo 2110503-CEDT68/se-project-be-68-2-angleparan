@@ -22,15 +22,15 @@ router
 
 router
   .route('/:id')
-  .get(protect,authorize('admin'), getAppointment)
+  .get(protect,authorize('admin', 'dentist'), getAppointment)
   .put(
     protect,
-    authorize('admin', 'user'),
+    authorize('admin', 'user', 'dentist'),
     updateAppointment
   )
   .delete(
     protect,
-    authorize('admin', 'user'),
+    authorize('admin', 'user', 'dentist'),
     deleteAppointment
   );
 
