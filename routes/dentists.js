@@ -12,6 +12,10 @@ const {
   deleteDentist
 } = require('../controllers/dentists');
 
+const ratingRoutes = require('./ratings');
+
+// nested route
+router.use('/:dentistId/ratings', ratingRoutes);
 // include other resource routers
 const appointmentRouter = require('./appointments');
 
