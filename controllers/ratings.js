@@ -44,11 +44,7 @@ exports.addRating = async (req, res) => {
     req.body.dentist = req.params.dentistId;
     req.body.user = req.user.id;
 
-<<<<<<< HEAD
-    // ✅ ตรวจสอบว่า user เคยนัดหมายกับทันตแพทย์คนนี้ไหม
-=======
     //ตรวจสอบว่า user เคยนัดหมายกับทันตแพทย์คนนี้ไหม
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     const appointment = await Appointment.findOne({
       dentist: req.params.dentistId,
       user: req.user.id,
@@ -61,11 +57,7 @@ exports.addRating = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
-    // ✅ กันให้ 1 คน รีวิวทันตแพทย์ได้ครั้งเดียว
-=======
     //กันให้ 1 คน รีวิวทันตแพทย์ได้ครั้งเดียว
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     const alreadyRated = await Rating.findOne({
       dentist: req.params.dentistId,
       user: req.user.id,
@@ -80,11 +72,7 @@ exports.addRating = async (req, res) => {
 
     const rating = await Rating.create(req.body);
 
-<<<<<<< HEAD
-    // อัปเดตค่าเฉลี่ยใน Dentist document
-=======
     //อัปเดตค่าเฉลี่ยใน Dentist document
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     await updateAverageRating(rating.dentist);
 
     res.status(201).json({
@@ -120,11 +108,7 @@ exports.updateRating = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
-    // 🔐 เช็คเจ้าของหรือ admin
-=======
     //เช็คเจ้าของหรือ admin
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     if (rating.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({
         success: false,
@@ -140,11 +124,7 @@ exports.updateRating = async (req, res) => {
       runValidators: true,
     });
 
-<<<<<<< HEAD
-    // 🔄 อัปเดตค่าเฉลี่ยใหม่
-=======
     // อัปเดตค่าเฉลี่ยใหม่
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     await updateAverageRating(rating.dentist);
 
     res.status(200).json({
@@ -173,11 +153,7 @@ exports.deleteRating = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
-    // 🔐 เช็คเจ้าของหรือ admin
-=======
     // เช็คเจ้าของหรือ admin
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     if (rating.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({
         success: false,
@@ -188,11 +164,7 @@ exports.deleteRating = async (req, res) => {
     const dentistId = rating.dentist;
     await rating.deleteOne();
 
-<<<<<<< HEAD
-    // 🔄 อัปเดตค่าเฉลี่ยใหม่
-=======
     // อัปเดตค่าเฉลี่ยใหม่
->>>>>>> e2aae81e534a8cf6f896285f634b253d763e06e9
     await updateAverageRating(dentistId);
 
     res.status(200).json({
