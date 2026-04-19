@@ -8,6 +8,7 @@ const { xss } = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
+
 //const swaggerJsDoc = require('swagger-jsdoc');
 //const swaggerUI = require('swagger-ui-express');
 
@@ -46,6 +47,7 @@ const dentists = require('./routes/dentists');
 const appointments = require('./routes/appointments');
 const auth = require('./routes/auth');
 const users = require('./routes/users');
+const ratings = require('./routes/ratings');
 
 const app = express();
 // Enable advanced query parsing
@@ -67,6 +69,9 @@ app.use('/api/v1/dentists', dentists);
 app.use('/api/v1/appointments', appointments);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/users', users);
+app.use('/api/v1/dentists/:dentistId/ratings', ratings);
+app.use('/api/v1/ratings', ratings);
+
 
 const PORT = process.env.PORT || 5000;
 
