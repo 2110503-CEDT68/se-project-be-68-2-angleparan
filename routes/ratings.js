@@ -2,6 +2,7 @@ const express = require('express');
 const {
   addRating,
   getRatings,
+  getRatingSummary,
   updateRating,
   deleteRating,
 } = require('../controllers/ratings');
@@ -10,6 +11,11 @@ const { protect } = require('../middleware/auth');
 
 // mergeParams: true → รับ :dentistId จาก parent router (/dentists/:dentistId/ratings)
 const router = express.Router({ mergeParams: true });
+
+
+
+// GET /api/v1/ratings/summary — summary ทุก dentist (ต้องอยู่ก่อน /:id)
+router.get('/summary', getRatingSummary);
 
 // Routes: /api/v1/dentists/:dentistId/ratings
 router
