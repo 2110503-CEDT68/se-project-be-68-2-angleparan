@@ -20,7 +20,8 @@ const DentistSchema = new mongoose.Schema(
     workingHours: {
       start: { type: Number, required: true },  // เช่น 9
       end: { type: Number, required: true }     // เช่น 17
-  }
+    },
+    
   },
   {
     toJSON: { virtuals: true },
@@ -35,5 +36,14 @@ DentistSchema.virtual('appointments', {
   foreignField: 'dentist',
   justOne: false
 });
+
+// Reverse populate (Dentist -> Ratings) — ใช้ใน detail page
+DentistSchema.virtual('ratings', {
+  ref: 'Rating',
+  localField: '_id',
+  foreignField: 'dentist',
+  justOne: false
+});
+
 
 module.exports = mongoose.model('Dentist', DentistSchema);

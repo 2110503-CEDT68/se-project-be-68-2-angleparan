@@ -35,6 +35,37 @@ exports.getRatings = async (req, res) => {
   }
 };
 
+
+// @desc    Get rating summary for ALL dentists (avg + count per dentist)
+// @route   GET /api/v1/ratings/summary
+// @access  Public
+exports.getRatingSummary = async (req, res) => {
+  try {
+    const stats = await Rating.aggregate([
+      {
+        $group: {
+          _id: '$dentist',
+          avgRating: { $avg: '$rating' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // แปลงเป็น { dentistId: { avg, count } }
+    const summary = {};
+    stats.forEach((s) => {
+      summary[s._id.toString()] = {
+        avg: Math.round(s.avgRating * 10) / 10,
+        count: s.count,
+      };
+    });
+
+    res.status(200).json({ success: true, data: summary });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
 // @desc    Add a rating for a dentist
 // @route   POST /api/v1/dentists/:dentistId/ratings
 // @access  Private (ต้อง login)
