@@ -331,6 +331,44 @@ exports.updateAppointment = async (req, res, next) => {
         message: `No appointment with id ${req.params.id}`
       });
     }
+
+    
+    // อัปเดตstatus
+   
+    if (req.user.role === 'dentist'||req.user.role === 'admin') {
+      const dentistProfileId = req.user.dentistProfile?.toString() || req.user.dentistProfile;
+
+      if ((!dentistProfileId || appointment.dentist.toString() !== dentistProfileId.toString())||req.user.role === 'admin') {
+        return res.status(401).json({
+          success: false,
+          message: 'You are not authorized to update this appointment'
+        });
+      }
+
+      const { status } = req.body;
+
+      if (!status || !VALID_STATUSES.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`
+        });
+      }
+
+      appointment = await Appointment.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        { returnDocument: 'after', runValidators: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...appointment._doc,
+          apptDate: moment(appointment.apptDate).tz("Asia/Bangkok").format("YYYY-MM-DD HH:mm")
+        }
+      });
+    }
+
     //doc sleeping
     // ถ้ามีการแก้ apptDate
     if (req.body.apptDate) {

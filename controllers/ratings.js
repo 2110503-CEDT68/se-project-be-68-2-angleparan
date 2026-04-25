@@ -79,6 +79,7 @@ exports.addRating = async (req, res) => {
     const appointment = await Appointment.findOne({
       dentist: req.params.dentistId,
       user: req.user.id,
+      status: 'completed',
     });
 
     if (!appointment) {
