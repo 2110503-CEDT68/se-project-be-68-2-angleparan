@@ -1,6 +1,7 @@
 const Appointment = require('../models/Appointment');
 const Dentist = require('../models/Dentist');
 const moment = require('moment-timezone');
+const VALID_STATUSES = ["pending", "confirmed", "cancelled", "completed"];
 
 // @desc    Get all appointments
 // @route   GET /api/v1/appointments
@@ -335,10 +336,10 @@ exports.updateAppointment = async (req, res, next) => {
     
     // อัปเดตstatus
    
-    if (req.user.role === 'dentist'||req.user.role === 'admin') {
+    if (req.user.role === 'dentist') {
       const dentistProfileId = req.user.dentistProfile?.toString() || req.user.dentistProfile;
 
-      if ((!dentistProfileId || appointment.dentist.toString() !== dentistProfileId.toString())||req.user.role === 'admin') {
+      if ((!dentistProfileId || appointment.dentist.toString() !== dentistProfileId.toString())) {
         return res.status(401).json({
           success: false,
           message: 'You are not authorized to update this appointment'
