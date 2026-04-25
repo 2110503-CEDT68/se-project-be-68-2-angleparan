@@ -1,7 +1,7 @@
 const Appointment = require('../models/Appointment');
 const Dentist = require('../models/Dentist');
 const moment = require('moment-timezone');
-const VALID_STATUSES = ["pending", "confirmed", "cancelled", "completed"];
+const VALID_STATUSES = [ "confirmed", "cancelled", "completed"];
 
 // @desc    Get all appointments
 // @route   GET /api/v1/appointments
