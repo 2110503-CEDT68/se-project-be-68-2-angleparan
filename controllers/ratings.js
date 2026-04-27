@@ -1,6 +1,7 @@
 const Rating = require('../models/Rating');
 const Appointment = require('../models/Appointment'); // ใช้ Appointment แทน Booking
 const Dentist = require('../models/Dentist');         // ใช้ Dentist แทน Car
+const AppointmentRecord = require('../models/AppointmentRecord');
 
 // @desc    Get all ratings (optionally filtered by dentist)
 // @route   GET /api/v1/dentists/:dentistId/ratings
@@ -75,21 +76,21 @@ exports.addRating = async (req, res) => {
     req.body.dentist = req.params.dentistId;
     req.body.user = req.user.id;
 
-    //ตรวจสอบว่า user เคยนัดหมายกับทันตแพทย์คนนี้ไหม
-    const appointment = await Appointment.findOne({
+    // ตรวจสอบว่า user เคยมีประวัติการรักษากับทันตแพทย์คนนี้ไหม (เปลี่ยนมาใช้ AppointmentRecord)
+    const appointmentRecord = await AppointmentRecord.findOne({
       dentist: req.params.dentistId,
       user: req.user.id,
       status: 'completed',
     });
 
-    if (!appointment) {
+    if (!appointmentRecord) {
       return res.status(400).json({
         success: false,
-        message: 'You must have an appointment with this dentist before giving a rating',
+        message: 'You must have a completed appointment record with this dentist before giving a rating',
       });
     }
 
-    //กันให้ 1 คน รีวิวทันตแพทย์ได้ครั้งเดียว
+    // กันให้ 1 คน รีวิวทันตแพทย์ได้ครั้งเดียว
     const alreadyRated = await Rating.findOne({
       dentist: req.params.dentistId,
       user: req.user.id,
@@ -104,7 +105,7 @@ exports.addRating = async (req, res) => {
 
     const rating = await Rating.create(req.body);
 
-    //อัปเดตค่าเฉลี่ยใน Dentist document
+    // อัปเดตค่าเฉลี่ยใน Dentist document
     await updateAverageRating(rating.dentist);
 
     res.status(201).json({
