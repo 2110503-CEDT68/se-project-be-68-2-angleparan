@@ -9,32 +9,41 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
 
-//const swaggerJsDoc = require('swagger-jsdoc');
-//const swaggerUI = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 นาที
   max: 100                 // request สูงสุด
 });
 
-// const swaggerOptions = {
-//   swaggerDefinition: {
-//     openapi: '3.0.0',
-//     info: {
-//       title: 'Library API',
-//       version: '1.0.0',
-//       description: 'A simple Express VacQ API'
-//     },
-//     servers: [
-//       {
-//         url: 'http://localhost:5000/api/v1'
-//       }
-//     ]
-//   },
-//   apis: ['./routes/*.js']
-// };
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Dentist Appointment API',
+      version: '1.0.0',
+      description: 'API for Dentist Appointment Booking System'
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000/api/v1'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    }
+  },
+  apis: ['./routes/*.js']
+};
 
-// const swaggerDocs = swaggerJsDoc(swaggerOptions);
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 // Load env vars
 dotenv.config({ path: './config/config.env' });
@@ -51,6 +60,9 @@ const ratings = require('./routes/ratings');
 const appointmentRecords = require('./routes/appointmentRecords');
 
 const app = express();
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
 // Enable advanced query parsing
 app.set('query parser', 'extended');
 // Body parser

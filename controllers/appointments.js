@@ -68,7 +68,7 @@ exports.getAppointments = async (req, res, next) => {
       const sortBy = req.query.sort.split(',').join(' ');
       query = query.sort(sortBy);
     } else {
-      query = query.sort('-apptDate');
+      query = query.sort('apptDate');
     }
 
     // 5. Pagination
