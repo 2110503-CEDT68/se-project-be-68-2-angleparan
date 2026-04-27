@@ -2,12 +2,8 @@ const Appointment = require('../models/Appointment');
 const AppointmentRecord = require('../models/AppointmentRecord'); // อย่าลืมสร้างและ import model นี้นะครับ
 const Dentist = require('../models/Dentist');
 const moment = require('moment-timezone');
-<<<<<<< HEAD
-const VALID_STATUSES = [ "confirmed", "cancelled", "completed"];
-=======
 
 const VALID_STATUSES = ["pending", "confirmed", "cancelled", "completed"];
->>>>>>> 92781c16be3b828090409ccc0e3177151cc869c6
 
 // @desc    Get all appointments
 // @route   GET /api/v1/appointments
