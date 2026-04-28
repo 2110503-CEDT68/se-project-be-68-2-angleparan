@@ -61,7 +61,7 @@ const appointmentRecords = require('./routes/appointmentRecords');
 
 const app = express();
 
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
