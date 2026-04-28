@@ -12,9 +12,32 @@ const cors = require('cors');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
 
+// Load env vars
+dotenv.config({ path: './config/config.env' });
+
+// Connect to database
+connectDB();
+
+
+// Route files
+const dentists = require('./routes/dentists');
+const appointments = require('./routes/appointments');
+const auth = require('./routes/auth');
+const users = require('./routes/users');
+const ratings = require('./routes/ratings');
+const appointmentRecords = require('./routes/appointmentRecords');
+
+const app = express();
+
+app.set('trust proxy', 1);
+
+
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 นาที
-  max: 100                 // request สูงสุด
+  max: 100,                 // request สูงสุด
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip
 });
 
 const swaggerOptions = {
@@ -45,23 +68,6 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Load env vars
-dotenv.config({ path: './config/config.env' });
-
-// Connect to database
-connectDB();
-
-// Route files
-const dentists = require('./routes/dentists');
-const appointments = require('./routes/appointments');
-const auth = require('./routes/auth');
-const users = require('./routes/users');
-const ratings = require('./routes/ratings');
-const appointmentRecords = require('./routes/appointmentRecords');
-
-const app = express();
-
-app.set('trust proxy', true);
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
