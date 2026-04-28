@@ -71,7 +71,7 @@ exports.updateUser = async (req, res, next) => {
     Object.keys(userFieldsToUpdate).forEach(key => userFieldsToUpdate[key] === undefined && delete userFieldsToUpdate[key]);
 
     user = await User.findByIdAndUpdate(req.params.id, userFieldsToUpdate, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true
     });
 
@@ -86,7 +86,7 @@ exports.updateUser = async (req, res, next) => {
 
       if (Object.keys(dentistFieldsToUpdate).length > 0) {
         await Dentist.findByIdAndUpdate(user.dentistProfile, dentistFieldsToUpdate, {
-          new: true,
+          returnDocument: 'after',
           runValidators: true
         });
       }
