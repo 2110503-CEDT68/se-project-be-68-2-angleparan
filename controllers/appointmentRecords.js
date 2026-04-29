@@ -145,7 +145,7 @@ exports.updateRecord = async (req, res, next) => {
     // Role verification logic can be added here if needed (e.g. only admin or assigned dentist can edit details)
 
     record = await AppointmentRecord.findByIdAndUpdate(req.params.id, req.body, {
-      new: true, runValidators: true
+      returnDocument: 'after', runValidators: true
     });
 
     res.status(200).json({ success: true, data: record });

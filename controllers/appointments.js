@@ -68,7 +68,7 @@ exports.getAppointments = async (req, res, next) => {
       const sortBy = req.query.sort.split(',').join(' ');
       query = query.sort(sortBy);
     } else {
-      query = query.sort('-apptDate');
+      query = query.sort('apptDate');
     }
 
     // 5. Pagination
@@ -260,7 +260,7 @@ exports.updateAppointment = async (req, res, next) => {
     }
 
     appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true, runValidators: true
+      returnDocument: 'after', runValidators: true
     });
 
     res.status(200).json({

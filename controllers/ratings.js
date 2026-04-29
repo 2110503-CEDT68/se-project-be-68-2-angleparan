@@ -153,7 +153,7 @@ exports.updateRating = async (req, res) => {
     const allowedUpdates = { rating: req.body.rating, comment: req.body.comment };
 
     rating = await Rating.findByIdAndUpdate(req.params.id, allowedUpdates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
 
