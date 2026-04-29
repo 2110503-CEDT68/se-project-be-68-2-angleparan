@@ -1,209 +1,418 @@
 const {
   updateAppointment,
-  deleteAppointment
-} = require('../controllers/appointments');
+  deleteAppointment,
+} = require("../controllers/appointments");
 
-const Appointment = require('../models/Appointment');
-const AppointmentRecord = require('../models/AppointmentRecord');
-const Dentist = require('../models/Dentist');
+const Appointment = require("../models/Appointment");
+const AppointmentRecord = require("../models/AppointmentRecord");
+const Dentist = require("../models/Dentist");
 
-jest.mock('../models/Appointment');
-jest.mock('../models/AppointmentRecord');
-jest.mock('../models/Dentist');
+jest.mock("../models/Appointment");
+jest.mock("../models/AppointmentRecord");
+jest.mock("../models/Dentist");
 
 const mockRes = () => {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+  res.json = jest.fn();
   return res;
 };
 
-describe('Appointment Status Tests', () => {
+afterEach(() => jest.clearAllMocks());
 
-  let req, res;
+/* =========================
+   UPDATE APPOINTMENT TESTS
+========================= */
 
-  beforeEach(() => {
-    req = {
-      params: { id: '123' },
-      body: {},
-      user: { id: 'user1', role: 'user' }
+describe("updateAppointment - FULL BRANCH COVERAGE", () => {
+
+  test("❌ 404 - not found appointment", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue(null);
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: {}
     };
-    res = mockRes();
-    jest.clearAllMocks();
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  // ============================
-  // ✅ COMPLETED
-  // ============================
-  describe('status = completed', () => {
-
-    it('should move to record when completed with treatmentDetails', async () => {
-      const mockAppt = {
-        _id: '123',
-        apptDate: new Date(),
-        user: 'user1',
-        dentist: 'dentist1',
-        deleteOne: jest.fn()
-      };
-
-      Appointment.findById.mockResolvedValue(mockAppt);
-      AppointmentRecord.create.mockResolvedValue({ status: 'completed' });
-
-      req.body = {
-        status: 'completed',
-        treatmentDetails: 'ถอนฟัน'
-      };
-
-      await updateAppointment(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(AppointmentRecord.create).toHaveBeenCalled();
-      expect(mockAppt.deleteOne).toHaveBeenCalled();
+  test("❌ 401 - dentist not owner", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1"
     });
 
-    it('should fail if no treatmentDetails', async () => {
-      Appointment.findById.mockResolvedValue({
-        _id: '123',
-        user: 'user1',
-        dentist: 'dentist1'
-      });
+    const req = {
+      params: { id: "1" },
+      user: { role: "dentist", dentistProfile: "D2" },
+      body: {}
+    };
 
-      req.body = { status: 'completed' };
+    const res = mockRes();
 
-      await updateAppointment(req, res);
+    await updateAppointment(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-    });
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  // ============================
-  // ❌ CANCELLED
-  // ============================
-  describe('status = cancelled', () => {
-
-    it('should move to record when cancelled with reason', async () => {
-      const mockAppt = {
-        _id: '123',
-        apptDate: new Date(),
-        user: 'user1',
-        dentist: 'dentist1',
-        deleteOne: jest.fn()
-      };
-
-      Appointment.findById.mockResolvedValue(mockAppt);
-      AppointmentRecord.create.mockResolvedValue({ status: 'cancelled' });
-
-      req.body = {
-        status: 'cancelled',
-        cancelReason: 'ติดธุระ'
-      };
-
-      await updateAppointment(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(AppointmentRecord.create).toHaveBeenCalled();
-      expect(mockAppt.deleteOne).toHaveBeenCalled();
+  test("❌ 401 - user not owner", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1"
     });
 
-    it('should fail if no cancelReason', async () => {
-      Appointment.findById.mockResolvedValue({
-        _id: '123',
-        user: 'user1',
-        dentist: 'dentist1'
-      });
+    const req = {
+      params: { id: "1" },
+      user: { role: "user", id: "U2" },
+      body: {}
+    };
 
-      req.body = { status: 'cancelled' };
+    const res = mockRes();
 
-      await updateAppointment(req, res);
+    await updateAppointment(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-    });
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  // ============================
-  // 🔁 NORMAL STATUS (pending / confirmed)
-  // ============================
-  describe('status = pending / confirmed', () => {
-
-    it('should update normally without creating record', async () => {
-      const mockAppt = {
-        _id: '123',
-        user: 'user1',
-        dentist: 'dentist1'
-      };
-
-      Appointment.findById.mockResolvedValue(mockAppt);
-
-      Appointment.findByIdAndUpdate.mockResolvedValue({
-        _doc: { apptDate: new Date() }
-      });
-
-      req.body = { status: 'confirmed' };
-
-      await updateAppointment(req, res);
-
-      expect(AppointmentRecord.create).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
+  test("❌ 400 - completed but no treatmentDetails", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date()
     });
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: { status: "completed" }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  // ============================
-  // 🔒 PERMISSION
-  // ============================
-  describe('permission', () => {
-
-    it('should fail if user not owner', async () => {
-      Appointment.findById.mockResolvedValue({
-        _id: '123',
-        user: 'anotherUser',
-        dentist: 'dentist1'
-      });
-
-      await updateAppointment(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(401);
+  test("❌ 400 - cancelled but no cancelReason", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date()
     });
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: { status: "cancelled" }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  // ============================
-  // 🗑 DELETE → CANCELLED
-  // ============================
-  describe('deleteAppointment', () => {
+  test("✅ completed -> create record + deleteOne (covers TRUE branch)", async () => {
+    const deleteMock = jest.fn();
 
-    it('should move to record with cancelled status', async () => {
-      const mockAppt = {
-        _id: '123',
-        apptDate: new Date(),
-        user: 'user1',
-        dentist: 'dentist1',
-        deleteOne: jest.fn()
-      };
-
-      Appointment.findById.mockResolvedValue(mockAppt);
-
-      await deleteAppointment(req, res);
-
-      expect(AppointmentRecord.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'cancelled'
-        })
-      );
-
-      expect(mockAppt.deleteOne).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date(),
+      deleteOne: deleteMock
     });
 
-    it('should fail if not owner', async () => {
-      Appointment.findById.mockResolvedValue({
-        _id: '123',
-        user: 'anotherUser',
-        dentist: 'dentist1'
-      });
+    AppointmentRecord.create = jest.fn().mockResolvedValue({ id: "R1" });
 
-      await deleteAppointment(req, res);
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: {
+        status: "completed",
+        treatmentDetails: "done"
+      }
+    };
 
-      expect(res.status).toHaveBeenCalledWith(401);
-    });
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(AppointmentRecord.create).toHaveBeenCalled();
+    expect(deleteMock).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
   });
+
+  test("✅ cancelled -> create record + deleteOne", async () => {
+    const deleteMock = jest.fn();
+
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date(),
+      deleteOne: deleteMock
+    });
+
+    AppointmentRecord.create = jest.fn().mockResolvedValue({});
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: {
+        status: "cancelled",
+        cancelReason: "no show"
+      }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(deleteMock).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test("❌ 400 - dentist not working hour", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date()
+    });
+
+    Dentist.findById = jest.fn().mockResolvedValue({
+      workingHours: { start: 10, end: 12 }
+    });
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: {
+        apptDate: new Date("2026-01-01T05:00:00Z")
+      }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test("❌ 400 - slot already booked", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      _id: "1",
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date()
+    });
+
+    Dentist.findById = jest.fn().mockResolvedValue({
+      workingHours: { start: 0, end: 23 }
+    });
+
+    Appointment.findOne = jest.fn().mockResolvedValue({ _id: "X" });
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: { apptDate: new Date() }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test("✅ normal update path (final else)", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      _id: "1",
+      dentist: "D1",
+      user: "U1",
+      apptDate: new Date()
+    });
+
+    Dentist.findById = jest.fn().mockResolvedValue({
+      workingHours: { start: 0, end: 23 }
+    });
+
+    Appointment.findOne = jest.fn().mockResolvedValue(null);
+
+    Appointment.findByIdAndUpdate = jest.fn().mockResolvedValue({
+      _doc: {
+        apptDate: new Date()
+      },
+      apptDate: new Date()
+    });
+
+    const req = {
+      params: { id: "1" },
+      user: { role: "admin" },
+      body: { apptDate: new Date() }
+    };
+
+    const res = mockRes();
+
+    await updateAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+
+/* =========================
+   DELETE APPOINTMENT TESTS
+========================= */
+
+describe("deleteAppointment - FULL BRANCH COVERAGE", () => {
+
+  test("❌ 404 - not found", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue(null);
+
+    const req = {
+      params: { id: "1" },
+      user: { id: "U1", role: "user" }
+    };
+
+    const res = mockRes();
+
+    await deleteAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test("❌ 401 - not owner or admin", async () => {
+    Appointment.findById = jest.fn().mockResolvedValue({
+      user: "U2",
+      dentist: "D1"
+    });
+
+    const req = {
+      params: { id: "1" },
+      user: { id: "U1", role: "user" }
+    };
+
+    const res = mockRes();
+
+    await deleteAppointment(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  test("✅ delete with custom reason", async () => {
+    const deleteMock = jest.fn();
+
+    Appointment.findById = jest.fn().mockResolvedValue({
+      user: "U1",
+      dentist: "D1",
+      apptDate: new Date(),
+      deleteOne: deleteMock
+    });
+
+    AppointmentRecord.create = jest.fn();
+
+    const req = {
+      params: { id: "1" },
+      user: { id: "U1", role: "user" },
+      body: { cancelReason: "user cancel" }
+    };
+
+    const res = mockRes();
+
+    await deleteAppointment(req, res);
+
+    expect(AppointmentRecord.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cancelReason: "user cancel"
+      })
+    );
+
+    expect(deleteMock).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test("✅ delete with default reason", async () => {
+    const deleteMock = jest.fn();
+
+    Appointment.findById = jest.fn().mockResolvedValue({
+      user: "U1",
+      dentist: "D1",
+      apptDate: new Date(),
+      deleteOne: deleteMock
+    });
+
+    AppointmentRecord.create = jest.fn();
+
+    const req = {
+      params: { id: "1" },
+      user: { id: "U1", role: "user" },
+      body: {}
+    };
+
+    const res = mockRes();
+
+    await deleteAppointment(req, res);
+
+    expect(AppointmentRecord.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cancelReason: "Deleted by user/system"
+      })
+    );
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+  test("❌ 500 - catch block triggered (updateAppointment)", async () => {
+  Appointment.findById = jest.fn().mockRejectedValue(new Error("DB crash"));
+
+  const req = {
+    params: { id: "1" },
+    user: { role: "admin" },
+    body: {}
+  };
+
+  const res = mockRes();
+
+  await updateAppointment(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({
+      success: false,
+      message: "Cannot update Appointment"
+    })
+  );
+});
+
+
+test("❌ 500 - catch block triggered (deleteAppointment)", async () => {
+  Appointment.findById = jest.fn().mockRejectedValue(new Error("DB crash"));
+
+  const req = {
+    params: { id: "1" },
+    user: { id: "U1", role: "user" }
+  };
+
+  const res = mockRes();
+
+  await deleteAppointment(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({
+      success: false,
+      message: "Cannot delete Appointment"
+    })
+  );
+});
+
+
 
 });
